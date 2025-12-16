@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Santa Delivery Run</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --glass: rgba(255,255,255,.12);
+      --glass2: rgba(255,255,255,.18);
+      --stroke: rgba(255,255,255,.18);
+    }
+    body{
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(255,255,255,.25), transparent 60%),
+        radial-gradient(900px 700px at 90% 20%, rgba(0,0,0,.15), transparent 55%),
+        linear-gradient(135deg, #0b1020 0%, #162b5b 55%, #2b0f2f 100%);
+      color: #eef2ff;
+      overflow-x: hidden;
+    }
+    .snow{
+      position: fixed; inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,.85) 50%, transparent 55%),
+        radial-gradient(2px 2px at 30% 80%, rgba(255,255,255,.8) 50%, transparent 55%),
+        radial-gradient(1.5px 1.5px at 55% 35%, rgba(255,255,255,.75) 50%, transparent 55%),
+        radial-gradient(2px 2px at 80% 70%, rgba(255,255,255,.75) 50%, transparent 55%),
+        radial-gradient(1.2px 1.2px at 75% 15%, rgba(255,255,255,.7) 50%, transparent 55%),
+        radial-gradient(1.8px 1.8px at 15% 65%, rgba(255,255,255,.7) 50%, transparent 55%);
+      opacity: .55;
+      animation: snowDrift 14s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,.15));
+    }
+    @keyframes snowDrift{ from{ transform: translateY(-40px);} to{ transform: translateY(40px);} }
+
+    .topbar{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--glass), transparent);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .card-glass{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--glass2), rgba(255,255,255,.06));
+      backdrop-filter: blur(10px);
+      border-radius: 22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    canvas{
+      width: 100%;
+      height: auto;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .btn-fancy{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+      color: #eef2ff;
+      box-shadow: 0 12px 30px rgba(0,0,0,.28);
+    }
+    .btn-fancy:hover{ transform: translateY(-1px); box-shadow: 0 18px 40px rgba(0,0,0,.32); color:#fff; }
+
+    .progress{
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      overflow: hidden;
+    }
+    .progress-bar{
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(0,255,170,.9), rgba(180,255,0,.9), rgba(255,100,100,.92));
+    }
+    .hint{ font-size: .92rem; opacity: .9; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#f2f2f2; color:#111; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+
+<body>
+  <div class="snow"></div>
+
+  <div class="container py-4 py-lg-5">
+    <div class="topbar p-3 p-lg-4 mb-4">
+      <div class="d-flex flex-column flex-lg-row gap-2 align-items-start align-items-lg-center justify-content-between">
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🎅 Santa Run</span>
+            <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🏠 Click houses</span>
+            <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🏁 Finish</span>
+          </div>
+          <h1 class="h3 mt-3 mb-1">Pick the houses, then hit “Deliver!”</h1>
+          <div class="hint">
+            Click to add houses (max 8). Santa will go <b>North Pole → houses → Finish</b>.
+            Remove last with <span class="kbd">Backspace</span>, clear with <span class="kbd">C</span>.
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <button id="deliver" class="btn btn-fancy">Deliver! 🎁</button>
+          <button id="reset" class="btn btn-fancy">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <canvas id="c" width="640" height="640"></canvas>
+        <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+          <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">⚡ charger (+3)</span>
+          <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🟥 route</span>
+          <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">NP start</span>
+          <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🏁 finish</span>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card-glass p-3 p-lg-4">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="text-uppercase small opacity-75">Battery (SoC)</div>
+              <div><b id="soc">--</b> / <span id="socMax">--</span></div>
+            </div>
+            <div class="progress">
+              <div id="socBar" class="progress-bar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-uppercase small opacity-75 mb-2">Status</div>
+            <div class="p-3 rounded-4 border border-light border-opacity-25" style="background: rgba(0,0,0,.15);">
+              <b id="status">Click houses, then press Deliver! 🎁</b>
+            </div>
+          </div>
+
+          <div class="mb-0">
+            <div class="text-uppercase small opacity-75 mb-2">Rules</div>
+            <ul class="mb-0 hint">
+              <li>Move cost: road=1, grass=2, sand=3</li>
+              <li>⚡ tile: costs 2 to enter, then +3 SoC (cap at max)</li>
+              <li>If SoC hits 0 → Grinch wins 😬</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content card-glass">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="resultTitle">Result</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex gap-3 align-items-start">
+            <div style="font-size: 2.4rem" id="resultEmoji">🎁</div>
+            <div>
+              <div class="lead" id="resultLead">...</div>
+              <div class="hint mt-2" id="resultHint">...</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-fancy" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-fancy" id="playAgain">Play again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  (() => {
+    const N = 20, TILE = 32;
+    const SOC_MAX = 100;
+    const CHARGE_PER_STEP = 6;
+    const MAX_HOUSES = 8;
+
+    const TERRAIN = { ROAD:0, GRASS:1, SAND:2, WALL:3, CHG:4 };
+
+    const costToEnter = (t) => (t===TERRAIN.ROAD?2 : t===TERRAIN.GRASS?4 : t===TERRAIN.SAND?6 : t===TERRAIN.CHG?2 : Infinity);
+
+    const MAP = [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,3,3,3,3,0,2,2,2,2,2,2,0,0,0,0,3,3,3,0],
+      [0,0,0,0,3,0,2,3,3,3,3,2,0,3,3,0,0,0,3,0],
+      [0,3,3,0,3,0,2,3,0,0,3,2,0,3,0,0,3,0,3,0],
+      [0,3,0,0,0,0,2,3,0,4,0,2,0,3,0,3,3,0,0,0],
+      [0,3,0,3,3,0,2,3,0,3,0,2,4,4,4,3,0,0,3,0],
+      [0,0,0,0,3,0,2,2,2,3,0,2,3,3,0,3,0,3,3,0],
+      [0,3,3,0,3,0,3,3,2,3,0,0,0,3,0,0,0,0,3,0],
+      [0,3,0,4,4,4,0,3,2,3,3,3,0,3,3,3,3,0,3,0],
+      [0,3,0,3,3,3,1,3,2,2,2,0,1,1,1,0,3,0,3,0],
+      [0,0,0,0,0,3,1,3,3,3,2,0,3,3,3,1,3,0,0,0],
+      [0,3,3,3,0,3,1,0,0,3,2,0,3,4,3,1,3,3,3,0],
+      [0,0,0,3,0,0,1,3,0,0,2,0,3,0,3,1,0,0,0,0],
+      [0,3,0,3,3,3,1,3,3,0,2,0,0,0,3,3,3,3,0,0],
+      [0,3,0,0,0,3,4,4,4,4,2,2,2,0,0,0,0,3,0,3],
+      [0,3,3,3,0,3,3,3,3,0,3,3,2,3,3,3,0,3,0,3],
+      [0,0,0,0,0,0,0,0,3,0,0,0,2,0,0,0,0,0,0,0],
+      [0,3,3,3,3,3,3,0,3,3,3,0,2,0,3,3,3,3,3,0],
+      [0,0,0,0,0,0,0,1,1,1,1,0,2,0,0,0,0,4,0,0],
+      [0,3,3,3,3,3,3,3,3,3,3,0,0,0,3,3,3,3,3,0],
+    ];
+
+    const start = [0,0];
+    const finish = [19,18];
+
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    const uiSoc = document.getElementById("soc");
+    const uiSocMax = document.getElementById("socMax");
+    const uiSocBar = document.getElementById("socBar");
+    const uiStatus = document.getElementById("status");
+
+    uiSocMax.textContent = SOC_MAX;
+
+    const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+
+    let grid, pos, soc;
+    let houses = [];
+    let plannedPath = [];
+    let running = false;
+    let nextStopIndex = 0;
+
+    function reset(){
+      grid = MAP.map(r => r.slice());
+      pos = [...start];
+      soc = SOC_MAX;
+      houses = [];
+      plannedPath = [];
+      nextStopIndex = 0;
+      running = false;
+      uiStatus.textContent = "Click houses, then press Deliver! 🎁";
+      updateUI();
+      draw();
+    }
+
+    const inBounds = (x,y)=> x>=0 && y>=0 && x<N && y<N;
+
+    function neighbors(x,y){
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+      const out = [];
+      for(const [dx,dy] of dirs){
+        const nx=x+dx, ny=y+dy;
+        if(inBounds(nx,ny) && grid[ny][nx] !== TERRAIN.WALL) out.push([nx,ny]);
+      }
+      return out;
+    }
+
+    function isCharger(x,y){ return grid[y][x] === TERRAIN.CHG; }
+
+    function manhattan(a,b){ return Math.abs(a[0]-b[0]) + Math.abs(a[1]-b[1]); }
+
+    // Distance-only A*
+    function astarDistance(from, to){
+      const sk = `${from[0]},${from[1]}`;
+      const goalK = `${to[0]},${to[1]}`;
+      const open = new Map();  // key -> f
+      const g = new Map();     // key -> g
+      const came = new Map();  // key -> parent
+
+      function popBest(){
+        let bestK=null, bestF=Infinity;
+        for(const [k,f] of open.entries()){
+          if(f < bestF){ bestF=f; bestK=k; }
+        }
+        open.delete(bestK);
+        return bestK;
+      }
+
+      open.set(sk, manhattan(from,to));
+      g.set(sk, 0);
+
+      while(open.size){
+        const curK = popBest();
+        const [cx,cy] = curK.split(",").map(Number);
+        if(curK === goalK) break;
+
+        for(const [nx,ny] of neighbors(cx,cy)){
+          const nk = `${nx},${ny}`;
+          const candG = g.get(curK) + 1;
+          if(!g.has(nk) || candG < g.get(nk)){
+            came.set(nk, curK);
+            g.set(nk, candG);
+            open.set(nk, candG + manhattan([nx,ny], to));
+          }
+        }
+      }
+
+      if(!came.has(goalK) && sk !== goalK) return null;
+
+      const path = [];
+      let cur = goalK;
+      path.push(cur.split(",").map(Number));
+      while(cur !== sk){
+        cur = came.get(cur);
+        if(!cur) break;
+        path.push(cur.split(",").map(Number));
+      }
+      path.reverse();
+      return path;
+    }
+
+    function showResult(kind){
+      const title = document.getElementById("resultTitle");
+      const emoji = document.getElementById("resultEmoji");
+      const lead  = document.getElementById("resultLead");
+      const hint  = document.getElementById("resultHint");
+
+      if(kind === "win"){
+        title.textContent = "Christmas Saved!";
+        emoji.textContent = "🎅✨";
+        lead.textContent  = "Santa: Ho ho ho! You delivered everything and reached the finish!";
+        hint.textContent  = "Nice route planning! 🎁🏁";
+      } else if(kind === "lose"){
+        title.textContent = "Holiday Ruined 😬";
+        emoji.textContent = "🧟‍♂️❄️";
+        lead.textContent  = "The Grinch wins… the sleigh ran out of battery.";
+        hint.textContent  = "Try choosing houses closer to chargers ⚡ or fewer houses.";
+      } else {
+        title.textContent = "No Route Found";
+        emoji.textContent = "🗺️🚫";
+        lead.textContent  = "Santa can’t reach the next stop (blocked by walls).";
+        hint.textContent  = "Pick different houses on reachable areas.";
+      }
+      resultModal.show();
+    }
+
+    function updateUI(){
+      uiSoc.textContent = soc.toFixed(0);
+      uiSocBar.style.width = Math.max(0, Math.min(100, (soc/SOC_MAX)*100)) + "%";
+    }
+
+    function planAndRun(){
+      if(running) return;
+
+      const stops = [...houses, finish];
+      plannedPath = [];
+      nextStopIndex = 0;
+
+      let cur = [...pos];
+      for(const stop of stops){
+        const leg = astarDistance(cur, stop);
+        if(!leg){
+          uiStatus.textContent = "No route exists to a stop.";
+          draw();
+          showResult("noroute");
+          return;
+        }
+        plannedPath.push(...leg.slice(1));
+        cur = [...stop];
+      }
+
+      uiStatus.textContent = `Delivering: ${houses.length} house(s) → finish 🏁`;
+      draw();
+      running = true;
+      tick();
+    }
+
+    function tick(){
+      if(!running) return;
+
+      if(plannedPath.length === 0){
+        running = false;
+        uiStatus.textContent = "Win: all stops reached 🎁✅";
+        draw();
+        showResult("win");
+        return;
+      }
+
+      const [nx,ny] = plannedPath.shift();
+
+      const t = grid[ny][nx];
+      const moveCost = costToEnter(t);
+      soc -= moveCost;
+      pos = [nx,ny];
+
+      if(isCharger(nx,ny)){
+        soc = Math.min(SOC_MAX, soc + CHARGE_PER_STEP);
+      }
+
+      if(soc <= 0){
+        soc = 0;
+        running = false;
+        plannedPath = [];
+        uiStatus.textContent = "Lose: battery depleted 🔋❌";
+        updateUI();
+        draw();
+        showResult("lose");
+        return;
+      }
+
+      // Update which stop we reached (houses then finish)
+      const targets = [...houses, finish];
+      if(nextStopIndex < targets.length){
+        const [tx,ty] = targets[nextStopIndex];
+        if(pos[0]===tx && pos[1]===ty){
+          nextStopIndex++;
+        }
+      }
+
+      uiStatus.textContent = `Stops reached: ${nextStopIndex}/${targets.length}`;
+      updateUI();
+      draw();
+      setTimeout(tick, 120);
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // tiles
+      for(let y=0;y<N;y++){
+        for(let x=0;x<N;x++){
+          const t = grid[y][x];
+          if(t===TERRAIN.ROAD) ctx.fillStyle = "rgba(255,255,255,0.92)";
+          else if(t===TERRAIN.GRASS) ctx.fillStyle = "rgba(205,255,220,0.92)";
+          else if(t===TERRAIN.SAND) ctx.fillStyle = "rgba(255,235,200,0.92)";
+          else if(t===TERRAIN.WALL) ctx.fillStyle = "rgba(25,25,28,0.92)";
+          else if(t===TERRAIN.CHG) ctx.fillStyle = "rgba(195,230,255,0.92)";
+
+          ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
+          ctx.strokeStyle = "rgba(0,0,0,0.08)";
+          ctx.strokeRect(x*TILE, y*TILE, TILE, TILE);
+
+          if(t===TERRAIN.CHG){
+            ctx.fillStyle = "#0b5ed7";
+            ctx.font = "16px system-ui";
+            ctx.fillText("⚡", x*TILE+9, y*TILE+21);
+          }
+        }
+      }
+
+      // planned path
+      if(plannedPath.length){
+        ctx.globalAlpha = 0.38;
+        ctx.fillStyle = "#ff2d55";
+        for(const [x,y] of plannedPath){
+          ctx.fillRect(x*TILE+10, y*TILE+10, TILE-20, TILE-20);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // start + finish
+      drawMarker(start[0], start[1], "NP", "#00c853");
+      drawFinish(finish[0], finish[1]);
+
+      // houses
+      for(let i=0;i<houses.length;i++){
+        const [x,y] = houses[i];
+        drawHouse(x,y,i+1);
+      }
+
+      // next target halo
+      const targets = [...houses, finish];
+      if(targets.length){
+        const idx = Math.min(nextStopIndex, targets.length-1);
+        const [tx,ty] = targets[idx];
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(tx*TILE+TILE/2, ty*TILE+TILE/2, TILE*0.40, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+
+      // Santa
+      drawAgent(pos[0], pos[1]);
+    }
+
+    function roundRect(x, y, w, h, r){
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+
+    function drawMarker(x,y,label,color){
+      ctx.fillStyle = color;
+      roundRect(x*TILE+4, y*TILE+4, TILE-8, TILE-8, 8);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 12px system-ui";
+      ctx.fillText(label, x*TILE+7, y*TILE+20);
+    }
+
+    function drawFinish(x,y){
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      roundRect(x*TILE+7, y*TILE+8, TILE-14, TILE-14, 7);
+      ctx.fill();
+      ctx.fillStyle = "#111";
+      ctx.font = "16px system-ui";
+      ctx.fillText("🏁", x*TILE+9, y*TILE+22);
+    }
+
+    function drawHouse(x,y,num){
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.beginPath();
+      ctx.moveTo(x*TILE+8, y*TILE+14);
+      ctx.lineTo(x*TILE+TILE/2, y*TILE+6);
+      ctx.lineTo(x*TILE+TILE-8, y*TILE+14);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      roundRect(x*TILE+10, y*TILE+14, TILE-20, TILE-16, 5);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffcc00";
+      ctx.beginPath();
+      ctx.arc(x*TILE+TILE-9, y*TILE+9, 7, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 10px system-ui";
+      ctx.fillText(String(num), x*TILE+TILE-12, y*TILE+12);
+    }
+
+    function drawAgent(x,y){
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(x*TILE+TILE/2, y*TILE+TILE/2, TILE*0.28, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ff3b30";
+      ctx.beginPath();
+      ctx.moveTo(x*TILE+TILE/2 - 8, y*TILE+TILE/2 - 10);
+      ctx.lineTo(x*TILE+TILE/2 + 10, y*TILE+TILE/2 - 10);
+      ctx.lineTo(x*TILE+TILE/2 + 2, y*TILE+TILE/2 - 20);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(x*TILE+TILE/2 + 2, y*TILE+TILE/2 - 20, 3, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    function canvasToCell(evt){
+      const r = canvas.getBoundingClientRect();
+      const x = Math.floor((evt.clientX - r.left) * (canvas.width / r.width) / TILE);
+      const y = Math.floor((evt.clientY - r.top)  * (canvas.height / r.height) / TILE);
+      return [x,y];
+    }
+
+    // Click to add houses
+    canvas.addEventListener("click", (evt) => {
+      if(running) return;
+      const [x,y] = canvasToCell(evt);
+      if(!inBounds(x,y)) return;
+      if(grid[y][x] === TERRAIN.WALL) return;
+      if(x===start[0] && y===start[1]) return;
+      if(x===finish[0] && y===finish[1]) return;
+
+      if(houses.length >= MAX_HOUSES){
+        uiStatus.textContent = "Max houses reached (8).";
+        return;
+      }
+      if(houses.some(p => p[0]===x && p[1]===y)){
+        uiStatus.textContent = "That house is already selected.";
+        return;
+      }
+
+      houses.push([x,y]);
+      uiStatus.textContent = `Houses selected: ${houses.length}. Press Deliver! 🎁`;
+      draw();
+    });
+
+    // keyboard: remove/clear houses
+    window.addEventListener("keydown", (e) => {
+      if(running) return;
+      if(e.key === "Backspace"){
+        if(houses.length){
+          houses.pop();
+          uiStatus.textContent = `Houses selected: ${houses.length}. Press Deliver! 🎁`;
+          draw();
+        }
+        e.preventDefault();
+      }
+      if(e.key === "c" || e.key === "C"){
+        houses = [];
+        uiStatus.textContent = "Houses cleared. Click to add houses.";
+        draw();
+      }
+    });
+
+    document.getElementById("deliver").addEventListener("click", planAndRun);
+    document.getElementById("reset").addEventListener("click", reset);
+    document.getElementById("playAgain").addEventListener("click", () => {
+      resultModal.hide();
+      reset();
+    });
+
+    reset();
+  })();
+  </script>
+</body>
+</html>
