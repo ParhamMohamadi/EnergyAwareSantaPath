@@ -97,22 +97,19 @@
             <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🏠 waypoints </span>
             <span class="badge bg-light bg-opacity-10 border border-light border-opacity-10 rounded-pill px-3 py-2 text-light">🏁 Finish</span>
           </div> -->
-          <h1 class="h3 mt-3 mb-1">Mission: Plan  🎅 Santa's sleigh route to 🎁🏁</h1>
+          <h1 class="h3 mt-3 mb-1">Plan an energy-aware sleigh 🛷 path for 🎅 to deliver gifts to 🏁   </h1>
 <div class="hint mt-2">
   <!-- 🧭 <b>Goal:</b> Navigate Santa 🎅 from Start and reach the finish 🎁🏁   -->
   <!-- <br> -->
-  If Battery hits 0 → Grinch wins 🧟‍♂️❄️😬
+  🔋 Battery 0 = Grinch wins  🧟‍♂️
   <br>
-  🖱️ Click the map to place waypoints (up to 5)  
-  <br>
-  🎁 Press <b>Deliver!</b> to plan and run the route automatically  
+  🖱️ Click and lace up to 5 waypoints and presee 🎁 Deliver! 
   <br>
   <hr class="border-light border-opacity-25 my-2">
-
   <b>Energy costs:</b>  
-  Road = <b>2</b> , Grass = <b>4</b> , Sand = <b>6</b> .  
+  Road = <b>-2</b> , Grass = <b>-4</b> , Sand = <b>-6</b> .  
   <br>
-  ⚡🔋 Charger tile: costs <b>2</b> ⚡ to enter, then <b>+6</b> ⚡ battery
+  ⚡🔋 Charger tile: costs <b>+4</b> ⚡ battery
 </div>
 
 
@@ -532,26 +529,32 @@ function showResult(kind){
     }
 
     function drawHouse(x,y,num){
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.beginPath();
-      ctx.moveTo(x*TILE+8, y*TILE+14);
-      ctx.lineTo(x*TILE+TILE/2, y*TILE+6);
-      ctx.lineTo(x*TILE+TILE-8, y*TILE+14);
-      ctx.closePath();
-      ctx.fill();
+  // roof
+  ctx.fillStyle = "rgb(193, 18, 31)";
+  ctx.beginPath();
+  ctx.moveTo(x*TILE+8, y*TILE+14);
+  ctx.lineTo(x*TILE+TILE/2, y*TILE+6);
+  ctx.lineTo(x*TILE+TILE-8, y*TILE+14);
+  ctx.closePath();
+  ctx.fill();
 
-      ctx.fillStyle = "rgba(255,255,255,0.82)";
-      roundRect(x*TILE+10, y*TILE+14, TILE-20, TILE-16, 5);
-      ctx.fill();
+  // body
+  ctx.fillStyle = "rgb(253, 240, 213)";
+  roundRect(x*TILE+10, y*TILE+14, TILE-20, TILE-16, 5);
+  ctx.fill();
 
-      ctx.fillStyle = "#ffcc00";
-      ctx.beginPath();
-      ctx.arc(x*TILE+TILE-9, y*TILE+9, 7, 0, Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle = "#111";
-      ctx.font = "bold 10px system-ui";
-      ctx.fillText(String(num), x*TILE+TILE-12, y*TILE+12);
-    }
+  // number badge
+  ctx.fillStyle = "rgb(255, 209, 102)";
+  ctx.beginPath();
+  ctx.arc(x*TILE+TILE-9, y*TILE+9, 7, 0, Math.PI*2);
+  ctx.fill();
+
+  // number
+  ctx.fillStyle = "rgb(17, 17, 17)";
+  ctx.font = "bold 10px system-ui";
+  ctx.fillText(String(num), x*TILE+TILE-12, y*TILE+12);
+}
+
 
     function drawAgent(x,y){
       ctx.fillStyle = "#111";
