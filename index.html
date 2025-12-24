@@ -101,9 +101,9 @@
 <div class="hint mt-2">
   <!-- 🧭 <b>Goal:</b> Navigate Santa 🎅 from Start and reach the finish 🎁🏁   -->
   <!-- <br> -->
-  🔋 Battery 0 = Grinch wins  🧟‍♂️
+  🖱️ Click and place up to 5 waypoints on the map and press Deliver! 🎁  
   <br>
-  🖱️ Click and lace up to 5 waypoints and press 🎁 Deliver! 
+  Avoild 🔋 Battery = 0 as Grinch wins 🧟‍♂️
   <br>
   <hr class="border-light border-opacity-25 my-2">
   <b>Energy costs:</b>  
@@ -148,7 +148,7 @@
           <div class="mb-3">
             <div class="text-uppercase small opacity-75 mb-2">Status</div>
             <div class="p-3 rounded-4 border border-light border-opacity-25" style="background: rgba(0,0,0,.15);">
-              <b id="status">Click waypoints, then press Deliver! 🎁</b>
+              <b id="status">Place waypoints, then press Deliver! 🎁</b>
             </div>
           </div>
 
@@ -341,8 +341,8 @@ function showResult(kind){
   if(kind === "win"){
     title.textContent = "Christmas Saved!";
     emoji.textContent = "🎅✨";
-    lead.textContent  = "Santa: Ho ho ho! You delivered everything and reached the finish!";
-    hint.textContent  = "Nice route planning! 🎁🏁";
+    lead.textContent  = "Santa: Ho ho ho! Gifts are delivered! 🎁";
+    hint.textContent  = "Nice route planning! Merry Christmas!";
   } else if(kind === "lose"){
     title.textContent = "Holiday Ruined 😬";
     emoji.textContent = "🧟‍♂️❄️";
