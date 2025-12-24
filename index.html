@@ -103,7 +103,7 @@
   <!-- <br> -->
   🔋 Battery 0 = Grinch wins  🧟‍♂️
   <br>
-  🖱️ Click and lace up to 5 waypoints and presee 🎁 Deliver! 
+  🖱️ Click and lace up to 5 waypoints and press 🎁 Deliver! 
   <br>
   <hr class="border-light border-opacity-25 my-2">
   <b>Energy costs:</b>  
@@ -256,7 +256,7 @@
       plannedPath = [];
       nextStopIndex = 0;
       running = false;
-      uiStatus.textContent = "Click houses, then press Deliver! 🎁";
+      uiStatus.textContent = "Click waypoints, then press Deliver! 🎁";
       updateUI();
       draw();
     }
@@ -352,7 +352,7 @@ function showResult(kind){
     title.textContent = "No Route Found";
     emoji.textContent = "🗺️🚫";
     lead.textContent  = "Santa can’t reach the next stop (blocked by walls).";
-    hint.textContent  = "Pick different houses on reachable areas.";
+    hint.textContent  = "Pick different waypoints on reachable areas.";
   }
 
   resultModal.show();
