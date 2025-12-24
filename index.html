@@ -339,12 +339,12 @@ function showResult(kind){
   score.textContent = `Battery left: ${pct}%`;
 
   if(kind === "win"){
-    title.textContent = "Christmas Saved!";
+    title.textContent = "You Saved Christmas!";
     emoji.textContent = "🎅✨";
     lead.textContent  = "Santa: Ho ho ho! Gifts are delivered! 🎁";
     hint.textContent  = "Nice route planning! Merry Christmas!";
   } else if(kind === "lose"){
-    title.textContent = "Holiday Ruined 😬";
+    title.textContent = "Grinch Ruined Holiday  😬";
     emoji.textContent = "🧟‍♂️❄️";
     lead.textContent  = "The Grinch wins… the sleigh ran out of battery.";
     hint.textContent  = "Try choosing waypoints closer to chargers ⚡.";
